@@ -1,0 +1,187 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
+<title>HDFC Loan Approval Prediction</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css', v=1) }}"></head>
+
+<body>
+<div class="bg"></div>
+
+<form method="POST" action="/predict">
+
+<!-- ================= STEP 1 ================= -->
+<div class="card step active" id="step1">
+<div class="header">
+<div class="heading">
+<img src="{{ url_for('static', filename='logo.png') }}">
+<h3>HDFC Loan Approval Prediction</h3>
+</div>
+<p class="step-title">Step 1: Personal Details</p>
+</div>
+
+<label>Gender <span class="req">*</span></label>
+<select name="gender" required>
+<option value="">Select Gender</option>
+<option value="1">Male</option>
+<option value="0">Female</option>
+</select>
+
+<label>Marital Status <span class="req">*</span></label>
+<select name="married" required>
+<option value="">Select Marital Status</option>
+<option value="1">Married</option>
+<option value="0">Unmarried</option>
+</select>
+
+<label>Number of dependents<span class="req">*</span></label>
+<input type="number" name="dependents" min="0" max="10" required placeholder="0-10">
+
+<label>Education<span class="req">*</span></label>
+<select name="education" required>
+<option value="">Select Education</option>
+<option value="1">Graduate</option>
+<option value="0">Not Graduate</option>
+</select>
+
+<label>Employment Status <span class="req">*</span></label>
+<select name="self_employed" required>
+<option value="">Select Employment Status</option>
+<option value="0">Salaried</option>
+<option value="1">Self-Employed</option>
+</select>
+
+<label>Property Area<span class="req">*</span></label>
+<select name="property_area" required>
+<option value="">Select Property Area</option>
+<option value="0">Rural</option>
+<option value="1">Semiurban</option>
+<option value="2">Urban</option>
+</select>
+
+<p id="errorMsg" class="error-msg">⚠️ Please fill all the required fields before proceeding.</p>
+
+<div class="btn-row">
+<button type="reset" class="btn-outline">Reset</button>
+<button type="button" class="btn" onclick="nextStep()">Next →</button>
+</div>
+</div>
+
+<!-- ================= STEP 2 ================= -->
+<div class="card step" id="step2">
+<div class="header">
+<div class="heading">
+<img src="{{ url_for('static', filename='logo.png') }}">
+<h3>HDFC Loan Approval Prediction</h3>
+</div>
+<p class="step-title">Step 2: Loan Details</p>
+</div>
+
+<!-- SLIDERS (UNCHANGED) -->
+<!-- CREDIT SCORE -->
+<div class="slider-group">
+<div class="label-box-row">
+<label>Credit Score <span class="req">*</span></label>
+<div class="num-inp-wrap">
+<input type="text" class="calculator-num-inp" value="650">
+</div>
+</div>
+<input type="range" min="300" max="900" value="650"
+name="credit_score" class="range-input" oninput="sync(this)">
+<div class="min-max-wrap"><span>300</span><span>900</span></div>
+</div>
+
+<!-- APPLICANT INCOME -->
+<div class="slider-group">
+<div class="label-box-row">
+<label>Applicant Income (Monthly) <span class="req">*</span></label>
+<div class="num-inp-wrap">
+<span class="input-prefix">₹</span>
+<input type="text" class="calculator-num-inp" value="50000">
+</div>
+</div>
+<input type="range" min="10000" max="1000000" value="50000"
+name="applicant_income" class="range-input" oninput="sync(this)">
+<div class="min-max-wrap"><span>₹ 10k</span><span>₹ 10L</span></div>
+</div>
+
+<!-- CO-APPLICANT -->
+<div class="slider-group">
+<div class="label-box-row">
+<label>Co-Applicant Income (Monthly)</label>
+<div class="num-inp-wrap">
+<span class="input-prefix">₹</span>
+<input type="text" class="calculator-num-inp" value="0">
+</div>
+</div>
+<input type="range" min="0" max="1000000" value="0"
+name="coapplicant_income" class="range-input" oninput="sync(this)">
+<div class="min-max-wrap"><span>₹ 0</span><span>₹ 10L</span></div>
+</div>
+
+<!-- LOAN AMOUNT -->
+<div class="slider-group">
+<div class="label-box-row">
+<label>Loan Amount <span class="req">*</span></label>
+<div class="num-inp-wrap">
+<span class="input-prefix">₹</span>
+<input type="text" class="calculator-num-inp" value="500000">
+</div>
+</div>
+<input type="range" min="50000" max="5000000" value="500000"
+name="loan_amount" class="range-input" oninput="sync(this)">
+<div class="min-max-wrap"><span>₹ 50k</span><span>₹ 50L</span></div>
+</div>
+
+<!-- LOAN TERM -->
+<div class="slider-group">
+<div class="label-box-row">
+<label>Loan Term (Months) <span class="req">*</span></label>
+<div class="num-inp-wrap">
+<input type="text" class="calculator-num-inp" value="180">
+</div>
+</div>
+<input type="range" min="12" max="360" value="180"
+name="loan_term" class="range-input" oninput="sync(this)">
+<div class="min-max-wrap"><span>12</span><span>360</span></div>
+</div>
+
+<div class="btn-row">
+<button type="button" class="btn-outline" onclick="prevStep()">← Previous</button>
+<button type="reset" class="btn-outline">Reset</button>
+<button type="submit" class="btn">Predict</button>
+</div>
+</div>
+
+<!-- ================= STEP 3 ================= -->
+{% if show_result %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+document.getElementById("step1")?.classList.remove("active");
+document.getElementById("step2")?.classList.remove("active");
+document.getElementById("step3")?.classList.add("active");
+});
+</script>
+
+<div class="card step" id="step3">
+<div class="header">
+<div class="heading">
+<img src="{{ url_for('static', filename='logo.png') }}">
+<h3>HDFC Loan Approval Prediction</h3>
+</div>
+<p class="step-title">Step 3: Loan Prediction</p>
+</div>
+
+{% if status == "approved" %}
+<div class="result approved">✅ Loan Approved</div>
+{% else %}
+<div class="result rejected">❌ Loan Rejected</div>
+{% endif %}
+
+<div class="btn-row">
+<button type="button" class="btn-outline" onclick="goBackToForm()">← Back</button>
+<button type="button" class="btn" onclick="location.href='/'">Reset All</button>
+</div>
+</div>
+{% endif %}
+
+</form>
+<script src="{{ url_for('static', filename='form.js') }}"></script>
+</body></html>
