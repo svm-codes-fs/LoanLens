@@ -1,27 +1,89 @@
-LoanLens — Loan Approval Prediction System
+# LoanLens — Loan Approval Prediction
 
-LoanLens is a Machine Learning-based web application designed to predict loan approval outcomes using applicant financial and demographic information. The project demonstrates an end-to-end Machine Learning workflow, from data preprocessing and model training to web-based model deployment.
+LoanLens predicts whether a loan application is likely to be approved, from the applicant's financial and demographic details. It covers the whole machine learning workflow: data checks, cleaning, encoding, model training and comparison, evaluation, and a Flask web app that returns a prediction in real time.
 
-The system uses Python, Pandas, NumPy, and Scikit-learn for data analysis and predictive modeling. Applicant data such as income, education, employment status, loan amount, loan term, marital status, property area, and credit history is processed and transformed into a suitable format for Machine Learning. Missing values are handled, categorical features are encoded, and the dataset is prepared for model training and evaluation.
+**Live demo:** https://loan-lens-black.vercel.app/
 
-A Logistic Regression classification model is used to predict whether a loan application is likely to be approved or rejected. The model is evaluated using performance metrics such as Accuracy, Precision, Recall, F1-Score, and ROC-AUC, achieving an AUC score of approximately 0.94.
+## How it works
 
-To make the trained model accessible to users, the project integrates the Machine Learning model with a Flask backend. A user-friendly web interface built using HTML and CSS allows users to enter applicant details and receive a real-time loan approval prediction.
+1. The applicant fills in a form: gender, marital status, dependents, education, employment type, property area, credit score, applicant and co-applicant income, loan amount and loan term.
+2. The Flask backend turns the form into an 11-value feature vector, in the same order used for training.
+3. A trained **logistic regression** model returns the probability of approval.
+4. Applications with a probability of **0.40 or higher** are shown as approved; the rest as rejected.
 
-Key Features
-Loan approval prediction using Machine Learning
-Data preprocessing and cleaning
-Missing value handling
-Categorical feature encoding
-Feature engineering and model training
-Logistic Regression classification
-Model performance evaluation
-Flask-based web application
-Real-time prediction
-Interactive HTML/CSS user interface
-Serialized Machine Learning model using Pickle
-Tech Stack
+## Model
 
-Python | Pandas | NumPy | Scikit-learn | Flask | HTML | CSS | Pickle
+| Item | Detail |
+|---|---|
+| Dataset | `train_with_credit_score.xlsx`, 3,192 applications, 50% approved |
+| Features (11) | Gender, Married, Dependents, Education, Applicant income, Co-applicant income, Loan amount, Loan term, Property area, Credit score, Self-employed |
+| Dropped columns | `Loan_ID`, `Age`, `Credit_History` (identifier or noisy/leaky) |
+| Pipeline | `StandardScaler` → `LogisticRegression(C=0.3, class_weight="balanced")` |
+| Split | 70% train / 30% test, stratified, `random_state=42` |
+| Decision threshold | 0.40 |
 
-The project showcases practical skills in Machine Learning, Data Analysis, Predictive Modeling, Feature Engineering, Classification, Model Evaluation, Python Development, Flask, and Model Deployment, while demonstrating how predictive analytics can be applied to real-world financial decision-making.
+Performance of the saved model (`loan_model.pkl`) on the 30% test split:
+
+| Metric | Value |
+|---|---|
+| ROC-AUC | 0.985 |
+| Accuracy (threshold 0.40) | 94.8% |
+| Precision | 91.2% |
+| Recall | 99.2% |
+| F1-score | 0.95 |
+
+A random forest was also tried for comparison (`day7_model_comparison.py`); logistic regression was kept because it is simple, fast and easy to explain.
+
+## Tech stack
+
+Python · pandas · NumPy · scikit-learn · Flask · HTML · CSS · JavaScript · Vercel
+
+## Getting started
+
+```bash
+pip install -r requirements.txt
+```
+
+```bash
+python app.py
+```
+
+Then open http://127.0.0.1:5000.
+
+To re-run the training scripts you also need pandas and openpyxl (for the Excel files):
+
+```bash
+pip install pandas openpyxl
+```
+
+```bash
+python train_model.py
+```
+
+`train_model.py` overwrites `loan_model.pkl` with a freshly trained model.
+
+## Project structure
+
+```
+├── app.py                        Flask app: form page and /predict route
+├── train_model.py                Final training pipeline; saves loan_model.pkl
+├── loan_model.pkl                Trained model used by the app
+├── train_with_credit_score.xlsx  Raw dataset
+├── Day2_data_check.py            Step 1: shape, types, missing values, statistics
+├── day3_fix_missing.py           Step 2: fill missing values  → loan_cleaned.xlsx
+├── day4_encoding.py              Step 3: encode categories   → loan_encoded.csv
+├── day5_first_model.py           Step 4: first logistic regression
+├── day6_model_evaluation.py      Step 5: confusion matrix and classification report
+├── day7_model_comparison.py      Step 6: logistic regression vs random forest
+├── templates/index.html          The form and result page
+├── static/                       CSS, form script and images
+├── requirements.txt              Packages needed to run the app
+└── vercel.json                   Vercel deployment settings
+```
+
+The `day*` scripts record the project's development step by step; the app only needs `app.py`, `loan_model.pkl`, `templates/` and `static/`.
+
+## Limitations
+
+- Predictions are only as good as the dataset, and should support, not replace, a loan officer's judgement.
+- Gender and marital status are model inputs. In a real lending system they would need a fairness review, since lending decisions should not depend on them.
