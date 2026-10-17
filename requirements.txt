@@ -1,3 +1,4 @@
-Flask
-numpy
-scikit-learn
+Flask==3.1.1
+numpy==2.4.1
+# loan_model.pkl was pickled with this version; keep them in step
+scikit-learn==1.8.0
