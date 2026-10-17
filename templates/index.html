@@ -1,5 +1,5 @@
 <!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
-<title>HDFC Loan Approval Prediction</title>
+<title>LoanLens — Loan Approval Prediction</title>
 <link rel="stylesheet" href="{{ url_for('static', filename='style.css', v=1) }}"></head>
 
 <body>
@@ -11,8 +11,7 @@
 <div class="card step active" id="step1">
 <div class="header">
 <div class="heading">
-<img src="{{ url_for('static', filename='logo.png') }}">
-<h3>HDFC Loan Approval Prediction</h3>
+<h3>LoanLens · Loan Approval Prediction</h3>
 </div>
 <p class="step-title">Step 1: Personal Details</p>
 </div>
@@ -58,8 +57,7 @@
 <div class="card step" id="step2">
 <div class="header">
 <div class="heading">
-<img src="{{ url_for('static', filename='logo.png') }}">
-<h3>HDFC Loan Approval Prediction</h3>
+<h3>LoanLens · Loan Approval Prediction</h3>
 </div>
 <p class="step-title">Step 2: Loan Details</p>
 </div>
@@ -167,8 +165,7 @@ document.getElementById("step3")?.classList.add("active");
 <div class="card step" id="step3">
 <div class="header">
 <div class="heading">
-<img src="{{ url_for('static', filename='logo.png') }}">
-<h3>HDFC Loan Approval Prediction</h3>
+<h3>LoanLens · Loan Approval Prediction</h3>
 </div>
 <p class="step-title">Step 3: Loan Prediction</p>
 </div>
@@ -263,5 +260,7 @@ since lending decisions should not depend on them.
 {% endif %}
 
 </form>
+
+<p class="disclaimer">LoanLens is an educational project, not a real bank's lending system; its decisions are not loan offers.</p>
 <script src="{{ url_for('static', filename='form.js') }}"></script>
 </body></html>
