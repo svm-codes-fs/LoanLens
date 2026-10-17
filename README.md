@@ -1,8 +1,12 @@
 # LoanLens — Loan Approval Prediction
 
+[![tests](https://github.com/svm-codes-fs/LoanLens/actions/workflows/tests.yml/badge.svg)](https://github.com/svm-codes-fs/LoanLens/actions/workflows/tests.yml)
+
 LoanLens predicts whether a loan application is likely to be approved, from the applicant's financial and demographic details. It covers the whole machine learning workflow: data checks, cleaning, encoding, model training and comparison, evaluation, and a Flask web app that returns a prediction in real time.
 
 **Live demo:** https://loan-lens-black.vercel.app/
+
+> LoanLens is an educational project. It is not affiliated with any bank, and its decisions are not real loan offers.
 
 ## How it works
 
@@ -63,6 +67,8 @@ Python · pandas · NumPy · scikit-learn · Flask · HTML · CSS · JavaScript 
 
 ## Getting started
 
+Requires Python 3.11+.
+
 ```bash
 pip install -r requirements.txt
 ```
@@ -73,7 +79,67 @@ python app.py
 
 Then open http://127.0.0.1:5000.
 
-To re-run the training scripts you also need pandas and openpyxl (for the Excel files):
+## Running the tests
+
+```bash
+pip install -r requirements-dev.txt
+```
+
+```bash
+pytest
+```
+
+The suite covers:
+
+- `tests/test_policy.py`: every bank policy rule passes and fails at its exact boundary (credit score 650/649, income ₹15,000, FOIR 50%, ages 21/60, age 65 at maturity).
+- `tests/test_explain.py`: the decision's probability matches `model.predict_proba`, every "what would change" suggestion really gets the loan approved when applied, and the reasons list leads with the failed policy checks.
+- `tests/test_app.py`: the form page and approved/rejected result pages through Flask's test client, plus the JSON API.
+
+GitHub Actions runs the suite on every push and pull request (`.github/workflows/tests.yml`).
+
+## API
+
+`POST /api/predict` takes an application as JSON and returns the same decision and explanation the web page shows.
+
+```bash
+curl -X POST http://127.0.0.1:5000/api/predict -H "Content-Type: application/json" -d '{"age": 30, "dependents": 0, "education": 1, "employment": 0, "property_area": 2, "credit_score": 600, "applicant_income": 60000, "coapplicant_income": 0, "existing_emi": 0, "loan_amount": 500000, "loan_term": 60}'
+```
+
+| Field | Values |
+|---|---|
+| `age` | years |
+| `dependents` | number of dependents |
+| `education` | 1 = graduate, 0 = not graduate |
+| `employment` | 0 = salaried, 1 = self-employed, 2 = unemployed |
+| `property_area` | 0 = rural, 1 = semiurban, 2 = urban |
+| `credit_score` | 300–900 |
+| `applicant_income`, `coapplicant_income`, `existing_emi` | ₹ per month |
+| `loan_amount` | ₹ |
+| `loan_term` | months |
+
+Response (shortened):
+
+```json
+{
+  "decision": "rejected",
+  "probability": 0.9,
+  "threshold": 50,
+  "checks": [
+    {"name": "Minimum credit score", "passed": false, "text": "Credit score 600 is below the minimum of 650 that lenders usually require."},
+    {"name": "Minimum income", "passed": true, "text": "Household income of ₹60,000/month meets the minimum of ₹15,000."}
+  ],
+  "reasons": [
+    {"label": "Minimum credit score", "value": "Not met", "text": "Credit score 600 is below the minimum of 650 that lenders usually require."}
+  ],
+  "suggestions": ["Raising your credit score from 600 to 650 would get this loan approved."]
+}
+```
+
+`probability` and `threshold` are percentages. Missing or non-integer fields return `400` with an `error` message (and a `missing` list when fields are absent).
+
+## Retraining the model
+
+The training scripts also need pandas and openpyxl (for the Excel files):
 
 ```bash
 pip install pandas openpyxl
@@ -83,31 +149,35 @@ pip install pandas openpyxl
 python train_model.py
 ```
 
-`train_model.py` overwrites `loan_model.pkl` with a freshly trained model.
+`train_model.py` overwrites `loan_model.pkl` with a freshly trained model. Keep scikit-learn at the version pinned in `requirements.txt`, since the app unpickles the model with it.
 
 ## Project structure
 
 ```
-├── app.py                        Flask app: form page and /predict route
+├── app.py                        Flask app: form page, /predict and /api/predict
 ├── features.py                   Feature engineering shared by training and the app
 ├── policy.py                     Bank policy checks (credit score, income, FOIR, age)
 ├── explain.py                    Decision (checks + model) and its explanation
 ├── train_model.py                Final training pipeline; saves loan_model.pkl
 ├── loan_model.pkl                Trained model used by the app
 ├── train_with_credit_score.xlsx  Raw dataset
-├── Day2_data_check.py            Step 1: shape, types, missing values, statistics
-├── day3_fix_missing.py           Step 2: fill missing values  → loan_cleaned.xlsx
-├── day4_encoding.py              Step 3: encode categories   → loan_encoded.csv
-├── day5_first_model.py           Step 4: first logistic regression
-├── day6_model_evaluation.py      Step 5: confusion matrix and classification report
-├── day7_model_comparison.py      Step 6: logistic regression vs random forest
 ├── templates/index.html          The form and result page
-├── static/                       CSS, form script and images
-├── requirements.txt              Packages needed to run the app
+├── static/                       CSS, form script and background image
+├── tests/                        pytest suite (policy, explanation, web app and API)
+├── experiments/                  Step-by-step exploration that led to the final model
+│   ├── day2_data_check.py        Shape, types, missing values, statistics
+│   ├── day3_fix_missing.py       Fill missing values  → loan_cleaned.xlsx
+│   ├── day4_encoding.py          Encode categories   → loan_encoded.csv
+│   ├── day5_first_model.py       First logistic regression
+│   ├── day6_model_evaluation.py  Confusion matrix and classification report
+│   └── day7_model_comparison.py  Logistic regression vs random forest
+├── .github/workflows/tests.yml   CI: runs pytest on every push and pull request
+├── requirements.txt              Pinned packages needed to run the app
+├── requirements-dev.txt          Adds pytest for development
 └── vercel.json                   Vercel deployment settings
 ```
 
-The `day*` scripts record the project's development step by step; the app only needs `app.py`, `features.py`, `policy.py`, `explain.py`, `loan_model.pkl`, `templates/` and `static/`.
+The `experiments/` scripts record how the project developed (run them from anywhere, e.g. `python experiments/day3_fix_missing.py`); the app itself only needs `app.py`, `features.py`, `policy.py`, `explain.py`, `loan_model.pkl`, `templates/` and `static/`.
 
 ## Limitations
 
