@@ -1,11 +1,16 @@
 import pandas as pd
 
+from pathlib import Path
+
+# Paths are relative to this file, so the script runs from any folder
+HERE = Path(__file__).resolve().parent
+
 # -----------------------------
 # Day 4: Encode Categorical Data
 # -----------------------------
 
 # Load cleaned dataset from Day 3
-data = pd.read_excel("loan_cleaned.xlsx")
+data = pd.read_excel(HERE / "loan_cleaned.xlsx")
 
 print("Dataset loaded for encoding\n")
 
@@ -89,6 +94,6 @@ print(data.dtypes)
 # -----------------------------
 # Save encoded dataset
 # -----------------------------
-data.to_csv("loan_encoded.csv", index=False)
+data.to_csv(HERE / "loan_encoded.csv", index=False)
 
 print("\n✅ Data encoded successfully and saved as loan_encoded.csv")

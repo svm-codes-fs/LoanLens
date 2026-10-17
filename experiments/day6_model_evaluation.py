@@ -3,12 +3,17 @@ import pickle
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, classification_report, accuracy_score
 
+from pathlib import Path
+
+# Paths are relative to this file, so the script runs from any folder
+HERE = Path(__file__).resolve().parent
+
 # -----------------------------
 # Day 6: Model Evaluation (FIXED)
 # -----------------------------
 
 # Load encoded dataset
-data = pd.read_csv("loan_encoded.csv")
+data = pd.read_csv(HERE / "loan_encoded.csv")
 print("Encoded dataset loaded\n")
 
 # -----------------------------
@@ -17,7 +22,7 @@ print("Encoded dataset loaded\n")
 
 # Drop columns NOT used during training
 columns_to_drop = []
-for col in ["Loan_ID", "Age", "Credit_History"]:
+for col in ["Loan_ID"]:  # day5 trains on every other column
     if col in data.columns:
         columns_to_drop.append(col)
 
@@ -47,7 +52,7 @@ X_train, X_test, y_train, y_test = train_test_split(
 # -----------------------------
 # Load trained model
 # -----------------------------
-with open("loan_model.pkl", "rb") as f:
+with open(HERE / "day5_model.pkl", "rb") as f:
     model = pickle.load(f)
 
 print("\nTrained model loaded successfully")

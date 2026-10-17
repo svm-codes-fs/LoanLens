@@ -5,12 +5,17 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, classification_report
 
+from pathlib import Path
+
+# Paths are relative to this file, so the script runs from any folder
+HERE = Path(__file__).resolve().parent
+
 # -----------------------------
 # Day 7: Model Comparison
 # -----------------------------
 
 # Load encoded dataset (UPDATED)
-data = pd.read_csv("loan_encoded.csv")
+data = pd.read_csv(HERE / "loan_encoded.csv")
 
 print("Encoded dataset loaded\n")
 

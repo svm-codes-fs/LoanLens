@@ -4,12 +4,17 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score
 import pickle
 
+from pathlib import Path
+
+# Paths are relative to this file, so the script runs from any folder
+HERE = Path(__file__).resolve().parent
+
 # -----------------------------
 # Day 5: Model Training
 # -----------------------------
 
 # Load encoded dataset
-data = pd.read_csv("loan_encoded.csv")
+data = pd.read_csv(HERE / "loan_encoded.csv")
 
 print("Encoded dataset loaded\n")
 
@@ -63,7 +68,7 @@ print(y_pred)
 # -----------------------------
 # Save trained model
 # -----------------------------
-with open("loan_model.pkl", "wb") as file:
+with open(HERE / "day5_model.pkl", "wb") as file:
     pickle.dump(model, file)
 
-print("\n✅ Trained model saved as loan_model.pkl")
+print("\n✅ Trained model saved as experiments/day5_model.pkl")

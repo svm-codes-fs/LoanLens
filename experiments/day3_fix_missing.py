@@ -1,11 +1,17 @@
 import pandas as pd
 
+from pathlib import Path
+
+# Paths are relative to this file, so the script runs from any folder
+HERE = Path(__file__).resolve().parent
+DATASET = HERE.parent / "train_with_credit_score.xlsx"
+
 # -----------------------------
 # Day 3: Handle Missing Values
 # -----------------------------
 
 # Load dataset (UPDATED)
-data = pd.read_excel("train_with_credit_score.xlsx")
+data = pd.read_excel(DATASET)
 
 # Clean column names (important)
 data.columns = (
@@ -59,6 +65,6 @@ print(data.isnull().sum())
 # -----------------------------
 # Save cleaned dataset
 # -----------------------------
-data.to_excel("loan_cleaned.xlsx", index=False)
+data.to_excel(HERE / "loan_cleaned.xlsx", index=False)
 
 print("\n✅ Missing values handled. Cleaned dataset saved as loan_cleaned.xlsx")
