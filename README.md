@@ -10,6 +10,14 @@ LoanLens predicts whether a loan application is likely to be approved, from the 
 2. The Flask backend turns the form into an 11-value feature vector, in the same order used for training.
 3. A trained **logistic regression** model returns the probability of approval.
 4. Applications with a probability of **0.40 or higher** are shown as approved; the rest as rejected.
+5. `explain.py` explains the decision. Because the model is a scaled logistic regression, each input's contribution to the score is exactly `coefficient × (value − training mean) / training std`, the same as its SHAP value for a linear model. The result page shows:
+   - the approval probability,
+   - the top reasons for the decision in plain language (e.g. "Your credit score of 480 is below the typical applicant's score of about 617"),
+   - the strongest factors that pushed the other way,
+   - for rejections, what would change the decision (e.g. the credit score or loan amount needed, everything else unchanged),
+   - a bar breakdown of every factor's effect.
+
+   Gender and marital status appear in the breakdown for transparency but are never given as reasons.
 
 ## Model
 
@@ -66,6 +74,7 @@ python train_model.py
 
 ```
 ├── app.py                        Flask app: form page and /predict route
+├── explain.py                    Turns the model's weights into reasons for each decision
 ├── train_model.py                Final training pipeline; saves loan_model.pkl
 ├── loan_model.pkl                Trained model used by the app
 ├── train_with_credit_score.xlsx  Raw dataset
@@ -81,7 +90,7 @@ python train_model.py
 └── vercel.json                   Vercel deployment settings
 ```
 
-The `day*` scripts record the project's development step by step; the app only needs `app.py`, `loan_model.pkl`, `templates/` and `static/`.
+The `day*` scripts record the project's development step by step; the app only needs `app.py`, `explain.py`, `loan_model.pkl`, `templates/` and `static/`.
 
 ## Limitations
 

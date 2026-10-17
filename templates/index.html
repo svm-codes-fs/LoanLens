@@ -175,6 +175,66 @@ document.getElementById("step3")?.classList.add("active");
 <div class="result rejected">❌ Loan Rejected</div>
 {% endif %}
 
+{% if explanation %}
+<p class="prob-line">
+Approval probability: <strong>{{ explanation.probability }}%</strong>
+(needs {{ explanation.threshold }}% or more)
+</p>
+
+<h4 class="xai-title">
+{% if status == "approved" %}Why it was approved{% else %}Why it was rejected{% endif %}
+</h4>
+<ul class="reasons {{ status }}">
+{% for f in explanation.reasons %}
+<li><span class="reason-label">{{ f.label }}: {{ f.value }}</span>{{ f.text }}</li>
+{% else %}
+<li>No single factor stood out; the decision came from many small effects together.</li>
+{% endfor %}
+</ul>
+
+{% if explanation.against %}
+<h4 class="xai-title">
+{% if status == "approved" %}What worked against it{% else %}What worked in your favour{% endif %}
+</h4>
+<ul class="reasons {{ 'rejected' if status == 'approved' else 'approved' }}">
+{% for f in explanation.against %}
+<li><span class="reason-label">{{ f.label }}: {{ f.value }}</span>{{ f.text }}</li>
+{% endfor %}
+</ul>
+{% endif %}
+
+{% if explanation.suggestions %}
+<h4 class="xai-title">What could change the decision</h4>
+<ul class="reasons tips">
+{% for s in explanation.suggestions %}
+<li>{{ s }}</li>
+{% endfor %}
+</ul>
+{% endif %}
+
+<details class="factor-details">
+<summary>See how every factor affected the decision</summary>
+<div class="factor-legend">
+<span class="dot pos"></span> towards approval
+<span class="dot neg"></span> towards rejection
+</div>
+{% for f in explanation.factors %}
+<div class="factor-row">
+<div class="factor-head">
+<span>{{ f.label }} <em>({{ f.value }})</em></span>
+<span class="impact">{{ f.impact }}</span>
+</div>
+<div class="factor-bar"><div class="{{ 'pos' if f.helps else 'neg' }}" style="width: {{ f.width }}%"></div></div>
+</div>
+{% endfor %}
+<p class="factor-note">
+Each bar shows how much that input moved the model's score compared with an average applicant,
+using the model's own weights. Gender and marital status are shown for transparency
+but are not treated as reasons, since lending decisions should not depend on them.
+</p>
+</details>
+{% endif %}
+
 <div class="btn-row">
 <button type="button" class="btn-outline" onclick="goBackToForm()">← Back</button>
 <button type="button" class="btn" onclick="location.href='/'">Reset All</button>

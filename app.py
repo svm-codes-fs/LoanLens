@@ -2,6 +2,8 @@ from flask import Flask, render_template, request
 import pickle
 import numpy as np
 
+from explain import explain
+
 app = Flask(__name__)
 
 # ----------------------------
@@ -9,6 +11,9 @@ app = Flask(__name__)
 # ----------------------------
 with open("loan_model.pkl", "rb") as f:
     model = pickle.load(f)
+
+# Approval probability needed for a loan to be approved
+THRESHOLD = 0.40
 
 
 # ----------------------------
@@ -68,10 +73,27 @@ def predict():
         approval_probability = model.predict_proba(features)[0][1]
 
         # Custom threshold (REALISTIC)
-        if approval_probability >= 0.40:
+        if approval_probability >= THRESHOLD:
             status = "approved"
         else:
             status = "rejected"
+
+        # ----------------------------
+        # Explain the decision (XAI)
+        # ----------------------------
+        explanation = explain(model, {
+            "gender": gender,
+            "married": married,
+            "dependents": dependents,
+            "education": education,
+            "applicant_income": applicant_income,
+            "coapplicant_income": coapplicant_income,
+            "loan_amount": loan_amount,
+            "loan_term": loan_term,
+            "property_area": property_area,
+            "credit_score": credit_score,
+            "self_employed": self_employed,
+        }, THRESHOLD)
 
         # ----------------------------
         # Render result page (STEP 3)
@@ -79,7 +101,8 @@ def predict():
         return render_template(
             "index.html",
             show_result=True,
-            status=status
+            status=status,
+            explanation=explanation
         )
 
     except Exception as e:

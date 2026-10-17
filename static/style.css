@@ -354,7 +354,122 @@ img {
     border-left: 4px solid #dc2626; /* red side bar */
 }
 
+/* Green side bar for factors that helped */
+.reasons.approved li {
+    border-left-color: #16a34a;
+}
+
+/* Blue side bar for suggestions */
+.reasons.tips li {
+    border-left-color: #0a4ea1;
+}
+
 /* Remove icons */
 .reasons li::before {
     content: "";
+}
+/* ================= EXPLANATION (XAI) ================= */
+.prob-line {
+    text-align: center;
+    font-size: 14px;
+    color: #333;
+    margin: 12px 0 4px;
+}
+
+.xai-title {
+    margin: 18px 0 0;
+    font-size: 15px;
+    color: #0a4ea1;
+}
+
+.reasons {
+    margin-bottom: 0;
+}
+
+.reason-label {
+    display: block;
+    font-weight: 700;
+    margin-bottom: 3px;
+}
+
+.factor-details {
+    margin-top: 18px;
+    background: #f9fafb;
+    border-radius: 10px;
+    padding: 12px 15px;
+    font-size: 13px;
+}
+
+.factor-details summary {
+    cursor: pointer;
+    font-weight: 600;
+    color: #0a4ea1;
+}
+
+.factor-legend {
+    margin: 10px 0 6px;
+    color: #555;
+}
+
+.dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin: 0 4px 0 10px;
+    vertical-align: middle;
+}
+
+.dot:first-child {
+    margin-left: 0;
+}
+
+.dot.pos,
+.factor-bar .pos {
+    background: #16a34a;
+}
+
+.dot.neg,
+.factor-bar .neg {
+    background: #dc2626;
+}
+
+.factor-row {
+    margin-top: 10px;
+}
+
+.factor-head {
+    display: flex;
+    justify-content: space-between;
+    color: #333;
+}
+
+.factor-head em {
+    color: #6c757d;
+    font-style: normal;
+}
+
+.impact {
+    color: #6c757d;
+    font-weight: 600;
+}
+
+.factor-bar {
+    height: 8px;
+    background: #e5e7eb;
+    border-radius: 4px;
+    margin-top: 4px;
+    overflow: hidden;
+}
+
+.factor-bar div {
+    height: 100%;
+    min-width: 2px;
+    border-radius: 4px;
+}
+
+.factor-note {
+    margin: 12px 0 0;
+    color: #6c757d;
+    line-height: 1.4;
 }
