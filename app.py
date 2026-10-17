@@ -97,7 +97,9 @@ def api_predict():
         probability=explanation["probability"],
         threshold=explanation["threshold"],
         checks=explanation["checks"],
-        reasons=explanation["reasons"],
+        # Every reason in the same shape, without the chart-only fields
+        reasons=[{k: r[k] for k in ("label", "value", "text")}
+                 for r in explanation["reasons"]],
         suggestions=explanation["suggestions"],
     )
 

@@ -85,9 +85,12 @@ def test_api_matches_the_explain_function(client, model):
     values = REJECTED["unaffordable loan"]
     expected = explain(model, values)
     body = client.post("/api/predict", json=values).get_json()
-    for key in ["probability", "threshold", "checks", "reasons",
-                "suggestions"]:
+    for key in ["probability", "threshold", "checks", "suggestions"]:
         assert body[key] == expected[key]
+    assert body["reasons"] == [
+        {"label": r["label"], "value": r["value"], "text": r["text"]}
+        for r in expected["reasons"]
+    ]
 
 
 def test_api_accepts_numeric_strings(client):
