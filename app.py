@@ -1,6 +1,5 @@
 from flask import Flask, render_template, request
 import pickle
-import numpy as np
 
 from explain import explain
 
@@ -11,9 +10,6 @@ app = Flask(__name__)
 # ----------------------------
 with open("loan_model.pkl", "rb") as f:
     model = pickle.load(f)
-
-# Approval probability needed for a loan to be approved
-THRESHOLD = 0.40
 
 
 # ----------------------------
@@ -37,63 +33,18 @@ def predict():
         # ----------------------------
         # Read form values safely
         # ----------------------------
-        gender = int(request.form.get("gender"))
-        married = int(request.form.get("married"))
-        dependents = int(request.form.get("dependents"))
-        education = int(request.form.get("education"))
-        self_employed = int(request.form.get("self_employed"))
-        property_area = int(request.form.get("property_area"))
-
-        credit_score = int(request.form.get("credit_score"))
-        applicant_income = int(request.form.get("applicant_income"))
-        coapplicant_income = int(request.form.get("coapplicant_income"))
-        loan_amount = int(request.form.get("loan_amount"))
-        loan_term = int(request.form.get("loan_term"))
+        fields = [
+            "age", "dependents", "education", "employment", "property_area",
+            "credit_score", "applicant_income", "coapplicant_income",
+            "existing_emi", "loan_amount", "loan_term",
+        ]
+        values = {name: int(request.form.get(name)) for name in fields}
 
         # ----------------------------
-        # Feature vector (ORDER MATTERS)
+        # Decide and explain (policy rules + model, see explain.py)
         # ----------------------------
-        features = np.array([[
-            gender,
-            married,
-            dependents,
-            education,
-            applicant_income,
-            coapplicant_income,
-            loan_amount,
-            loan_term,
-            property_area,
-            credit_score,
-            self_employed
-        ]])
-
-        # ----------------------------
-        # PROBABILITY-BASED DECISION
-        # ----------------------------
-        approval_probability = model.predict_proba(features)[0][1]
-
-        # Custom threshold (REALISTIC)
-        if approval_probability >= THRESHOLD:
-            status = "approved"
-        else:
-            status = "rejected"
-
-        # ----------------------------
-        # Explain the decision (XAI)
-        # ----------------------------
-        explanation = explain(model, {
-            "gender": gender,
-            "married": married,
-            "dependents": dependents,
-            "education": education,
-            "applicant_income": applicant_income,
-            "coapplicant_income": coapplicant_income,
-            "loan_amount": loan_amount,
-            "loan_term": loan_term,
-            "property_area": property_area,
-            "credit_score": credit_score,
-            "self_employed": self_employed,
-        }, THRESHOLD)
+        explanation = explain(model, values)
+        status = "approved" if explanation["approved"] else "rejected"
 
         # ----------------------------
         # Render result page (STEP 3)

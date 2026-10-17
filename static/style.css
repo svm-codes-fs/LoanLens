@@ -473,3 +473,31 @@ img {
     color: #6c757d;
     line-height: 1.4;
 }
+
+/* Bank policy checklist */
+.checks {
+    list-style: none;
+    padding: 0;
+    margin: 10px 0 0;
+}
+
+.checks li {
+    background: white;
+    padding: 8px 10px;
+    margin-bottom: 6px;
+    border-radius: 8px;
+    border-left: 4px solid #16a34a;
+    color: #333;
+}
+
+.checks li.fail {
+    border-left-color: #dc2626;
+}
+
+.checks li.pass .reason-label {
+    color: #1b7d1b;
+}
+
+.checks li.fail .reason-label {
+    color: #b10000;
+}

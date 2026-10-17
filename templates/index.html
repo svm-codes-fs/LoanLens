@@ -17,19 +17,8 @@
 <p class="step-title">Step 1: Personal Details</p>
 </div>
 
-<label>Gender <span class="req">*</span></label>
-<select name="gender" required>
-<option value="">Select Gender</option>
-<option value="1">Male</option>
-<option value="0">Female</option>
-</select>
-
-<label>Marital Status <span class="req">*</span></label>
-<select name="married" required>
-<option value="">Select Marital Status</option>
-<option value="1">Married</option>
-<option value="0">Unmarried</option>
-</select>
+<label>Age (years) <span class="req">*</span></label>
+<input type="number" name="age" min="18" max="75" required placeholder="18-75">
 
 <label>Number of dependents<span class="req">*</span></label>
 <input type="number" name="dependents" min="0" max="10" required placeholder="0-10">
@@ -42,10 +31,11 @@
 </select>
 
 <label>Employment Status <span class="req">*</span></label>
-<select name="self_employed" required>
+<select name="employment" required>
 <option value="">Select Employment Status</option>
 <option value="0">Salaried</option>
 <option value="1">Self-Employed</option>
+<option value="2">Unemployed</option>
 </select>
 
 <label>Property Area<span class="req">*</span></label>
@@ -116,6 +106,20 @@ name="coapplicant_income" class="range-input" oninput="sync(this)">
 <div class="min-max-wrap"><span>₹ 0</span><span>₹ 10L</span></div>
 </div>
 
+<!-- EXISTING EMIs -->
+<div class="slider-group">
+<div class="label-box-row">
+<label>Existing EMIs (Monthly)</label>
+<div class="num-inp-wrap">
+<span class="input-prefix">₹</span>
+<input type="text" class="calculator-num-inp" value="0">
+</div>
+</div>
+<input type="range" min="0" max="500000" value="0"
+name="existing_emi" class="range-input" oninput="sync(this)">
+<div class="min-max-wrap"><span>₹ 0</span><span>₹ 5L</span></div>
+</div>
+
 <!-- LOAN AMOUNT -->
 <div class="slider-group">
 <div class="label-box-row">
@@ -176,9 +180,11 @@ document.getElementById("step3")?.classList.add("active");
 {% endif %}
 
 {% if explanation %}
+{% set failed = explanation.checks | rejectattr("passed") | list %}
 <p class="prob-line">
-Approval probability: <strong>{{ explanation.probability }}%</strong>
+Model approval probability: <strong>{{ explanation.probability }}%</strong>
 (needs {{ explanation.threshold }}% or more)
+{% if failed %}<br>but {{ failed | length }} bank policy check{{ "s" if failed | length > 1 }} failed{% endif %}
 </p>
 
 <h4 class="xai-title">
@@ -213,7 +219,21 @@ Approval probability: <strong>{{ explanation.probability }}%</strong>
 {% endif %}
 
 <details class="factor-details">
-<summary>See how every factor affected the decision</summary>
+<summary>Bank policy checks</summary>
+<ul class="checks">
+{% for c in explanation.checks %}
+<li class="{{ 'pass' if c.passed else 'fail' }}">
+<span class="reason-label">{{ "✔" if c.passed else "✘" }} {{ c.name }}</span>{{ c.text }}
+</li>
+{% endfor %}
+</ul>
+<p class="factor-note">
+Indicative limits commonly used by Indian lenders. Every check must pass for approval.
+</p>
+</details>
+
+<details class="factor-details">
+<summary>See how every factor affected the model's score</summary>
 <div class="factor-legend">
 <span class="dot pos"></span> towards approval
 <span class="dot neg"></span> towards rejection
@@ -229,8 +249,8 @@ Approval probability: <strong>{{ explanation.probability }}%</strong>
 {% endfor %}
 <p class="factor-note">
 Each bar shows how much that input moved the model's score compared with an average applicant,
-using the model's own weights. Gender and marital status are shown for transparency
-but are not treated as reasons, since lending decisions should not depend on them.
+using the model's own weights. Gender and marital status are not used,
+since lending decisions should not depend on them.
 </p>
 </details>
 {% endif %}

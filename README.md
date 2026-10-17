@@ -6,41 +6,56 @@ LoanLens predicts whether a loan application is likely to be approved, from the 
 
 ## How it works
 
-1. The applicant fills in a form: gender, marital status, dependents, education, employment type, property area, credit score, applicant and co-applicant income, loan amount and loan term.
-2. The Flask backend turns the form into an 11-value feature vector, in the same order used for training.
-3. A trained **logistic regression** model returns the probability of approval.
-4. Applications with a probability of **0.40 or higher** are shown as approved; the rest as rejected.
-5. `explain.py` explains the decision. Because the model is a scaled logistic regression, each input's contribution to the score is exactly `coefficient × (value − training mean) / training std`, the same as its SHAP value for a linear model. The result page shows:
-   - the approval probability,
-   - the top reasons for the decision in plain language (e.g. "Your credit score of 480 is below the typical applicant's score of about 617"),
-   - the strongest factors that pushed the other way,
-   - for rejections, what would change the decision (e.g. the credit score or loan amount needed, everything else unchanged),
-   - a bar breakdown of every factor's effect.
+LoanLens works like a real lender: hard **policy checks** first, then a **risk model**, then a plain-language **explanation**. A loan is approved only if it passes every check *and* the model gives it at least a 50% approval probability.
 
-   Gender and marital status appear in the breakdown for transparency but are never given as reasons.
+1. The applicant fills in a form: age, dependents, education, employment (salaried / self-employed / unemployed), property area, credit score, applicant and co-applicant income, existing EMIs, loan amount and loan term.
+2. **Bank policy checks** (`policy.py`), using limits commonly quoted by Indian lenders:
+
+   | Check | Rule |
+   |---|---|
+   | Minimum credit score | 650 or higher |
+   | Minimum income | Household income of at least ₹15,000/month |
+   | Source of income | An unemployed applicant needs a co-applicant with income |
+   | Affordability (FOIR) | Existing EMIs + this loan's EMI ≤ 50% of household income (EMI estimated at 10.5% p.a.) |
+   | Age | 21–60 when applying, and the loan must end by age 65 |
+
+3. **Risk model** (`features.py`, `loan_model.pkl`): a logistic regression trained on the dataset, using credit-score bands, household income, dependents, education, employment and property area.
+4. **Explanation** (`explain.py`). Because the model is a scaled logistic regression, each input's contribution is exactly `coefficient × (value − training mean) / training std`, the same as its SHAP value for a linear model. The result page shows:
+   - the decision and the model's approval probability,
+   - why: any failed policy check first, then the strongest model factors, in plain language,
+   - the strongest factors that pushed the other way,
+   - for rejections, what single change would get the loan approved (credit score, loan amount, term or co-applicant income), found by re-running the full decision,
+   - every policy check with ✔ / ✘, and a bar breakdown of every model factor.
 
 ## Model
 
 | Item | Detail |
 |---|---|
 | Dataset | `train_with_credit_score.xlsx`, 3,192 applications, 50% approved |
-| Features (11) | Gender, Married, Dependents, Education, Applicant income, Co-applicant income, Loan amount, Loan term, Property area, Credit score, Self-employed |
-| Dropped columns | `Loan_ID`, `Age`, `Credit_History` (identifier or noisy/leaky) |
-| Pipeline | `StandardScaler` → `LogisticRegression(C=0.3, class_weight="balanced")` |
-| Split | 70% train / 30% test, stratified, `random_state=42` |
-| Decision threshold | 0.40 |
+| Features (9) | Credit score ≥ 600 / ≥ 650 / ≥ 700, log household income (clipped to ₹15k–₹2L), dependents, graduate, self-employed, unemployed, property area |
+| Not used | `Loan_ID` (identifier), `Credit_History` (leaks the label), `Age` (policy check instead), `Gender` and `Married` (lending decisions should not depend on them), loan amount / EMI burden (policy check instead, see below) |
+| Pipeline | `StandardScaler` → `LogisticRegression` |
+| Decision threshold | 0.50 |
 
-Performance of the saved model (`loan_model.pkl`) on the 30% test split:
+Performance (`python train_model.py`):
 
 | Metric | Value |
 |---|---|
-| ROC-AUC | 0.985 |
-| Accuracy (threshold 0.40) | 94.8% |
-| Precision | 91.2% |
-| Recall | 99.2% |
-| F1-score | 0.95 |
+| 5-fold CV ROC-AUC | 0.999 |
+| 5-fold CV accuracy | 98.3% |
+| Hold-out accuracy (30%) | 98.1% |
+| Hold-out precision | 96.6% |
+| Hold-out recall | 99.8% |
 
-A random forest was also tried for comparison (`day7_model_comparison.py`); logistic regression was kept because it is simple, fast and easy to explain.
+### Why the model changed
+
+The first model (raw inputs, threshold 0.40, 94.8% accuracy) rejected many strong applications:
+
+- **It judged the loan amount in rupees, not affordability.** Training loans are all under ₹3.7 lakh, but the form allows up to ₹50 lakh, so the straight-line penalty went far outside anything it had seen. A ₹20 lakh loan was rejected even with an 800 credit score and ₹2.5 lakh/month income, while a 500 score with high income was approved.
+- **Credit score was a straight line**, but in the data approval jumps at 650 (under 5% approved below it, about 97% above). Credit-score bands capture that, and match how banks treat CIBIL scores.
+- **Encoding bugs:** "Unemployed" was not in the mapping and silently became "salaried"; missing incomes and loan amounts were filled with 0.
+
+Every loan in the dataset costs under 20% of income (about 3% on average), and approval rates don't change with it, so the data cannot teach affordability. That is why affordability is a policy check rather than a model feature.
 
 ## Tech stack
 
@@ -74,7 +89,9 @@ python train_model.py
 
 ```
 ├── app.py                        Flask app: form page and /predict route
-├── explain.py                    Turns the model's weights into reasons for each decision
+├── features.py                   Feature engineering shared by training and the app
+├── policy.py                     Bank policy checks (credit score, income, FOIR, age)
+├── explain.py                    Decision (checks + model) and its explanation
 ├── train_model.py                Final training pipeline; saves loan_model.pkl
 ├── loan_model.pkl                Trained model used by the app
 ├── train_with_credit_score.xlsx  Raw dataset
@@ -90,9 +107,10 @@ python train_model.py
 └── vercel.json                   Vercel deployment settings
 ```
 
-The `day*` scripts record the project's development step by step; the app only needs `app.py`, `explain.py`, `loan_model.pkl`, `templates/` and `static/`.
+The `day*` scripts record the project's development step by step; the app only needs `app.py`, `features.py`, `policy.py`, `explain.py`, `loan_model.pkl`, `templates/` and `static/`.
 
 ## Limitations
 
-- Predictions are only as good as the dataset, and should support, not replace, a loan officer's judgement.
-- Gender and marital status are model inputs. In a real lending system they would need a fairness review, since lending decisions should not depend on them.
+- The dataset looks synthetic: approval is decided almost entirely by a credit-score cutoff at 650, and loans are small relative to income. Real bank data would include repayment history, existing debts, employment length and defaults.
+- The policy limits are indicative values commonly quoted for Indian personal loans, not any one bank's actual policy.
+- Predictions should support, not replace, a loan officer's judgement.
