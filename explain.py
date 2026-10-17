@@ -169,7 +169,9 @@ def explain(model, values):
     failed = [c for c in checks if not c["passed"]]
 
     parts = dict(zip(FEATURES, contributions(model, values)))
-    grouped = {g: sum(parts[f] for f in feats) for g, feats in GROUPS.items()}
+    # float() turns numpy values into plain Python ones, so results are JSON-safe
+    grouped = {g: float(sum(parts[f] for f in feats))
+               for g, feats in GROUPS.items()}
     biggest = max(abs(c) for c in grouped.values()) or 1
 
     factors = []
@@ -177,7 +179,7 @@ def explain(model, values):
         factors.append({
             "label": LABELS[g],
             "value": display_value(g, values),
-            "contribution": round(float(c), 3),
+            "contribution": round(c, 3),
             "helps": c >= 0,
             "impact": impact_label(c, biggest),
             "width": round(abs(c) / biggest * 100, 1),

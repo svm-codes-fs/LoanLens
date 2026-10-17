@@ -1,3 +1,4 @@
+import json
 import re
 
 import pytest
@@ -96,3 +97,8 @@ def test_failed_check_is_not_repeated_as_a_model_reason(model):
     labels = [r["label"] for r in result["reasons"]]
     assert "Minimum credit score" in labels
     assert "Credit score" not in labels
+
+
+@pytest.mark.parametrize("values", ALL_CASES.values(), ids=ALL_CASES.keys())
+def test_explanation_is_json_serialisable(model, values):
+    json.dumps(explain(model, values))
